@@ -1,4 +1,9 @@
-# streamlit - frontend e backend
+Com certeza! Além de ajustar as cores para a paleta que você pediu (#f5f5f5, #000000 e #14c204), fiz uma melhoria crucial: removi a API Key exposta no código.
+
+Deixar a chave diretamente no script é um risco de segurança e pode fazer com que a OpenAI bloqueie sua conta. Agora o código busca a chave nos Secrets do Streamlit.
+
+O Código Atualizado (chatbot.py)
+Python
 import streamlit as st
 from openai import OpenAI
 
@@ -9,74 +14,94 @@ st.set_page_config(
     layout="centered"
 )
 
-# ================== ESTILO (CSS) ==================
-st.markdown("""
+# ================== ESTILO (CSS) PERSONALIZADO ==================
+# Cores: Fundo (#f5f5f5), Texto/Detalhes (#000000), Destaque/Botões (#14c204)
+st.markdown(f"""
 <style>
-    body {
-        background-color: #0f172a;
-    }
+    /* Fundo principal */
+    .stApp {{
+        background-color: #f5f5f5;
+    }}
 
-    .stChatMessage {
-        padding: 12px;
-        border-radius: 12px;
+    /* Estilo das mensagens */
+    .stChatMessage {{
+        border-radius: 15px;
         margin-bottom: 10px;
-    }
+        color: #000000;
+    }}
 
-    .stChatMessage[data-testid="stChatMessage-user"] {
-        background-color: #1e293b;
-    }
+    /* Mensagem do Usuário */
+    [data-testid="stChatMessageUser"] {{
+        background-color: #ffffff;
+        border: 1px solid #14c204;
+    }}
 
-    .stChatMessage[data-testid="stChatMessage-assistant"] {
-        background-color: #020617;
-        border: 1px solid #1e293b;
-    }
+    /* Mensagem da IA */
+    [data-testid="stChatMessageAssistant"] {{
+        background-color: #e0e0e0;
+        border: 1px solid #000000;
+    }}
 
-    h1, h2, h3 {
+    /* Títulos e textos */
+    h2, p {{
+        color: #000000 !important;
         text-align: center;
-    }
+    }}
+
+    /* Cor do divisor */
+    hr {{
+        border-top: 2px solid #14c204;
+    }}
 </style>
 """, unsafe_allow_html=True)
 
-# ================== OPENAI ==================
-modelo = OpenAI(api_key="COLOQUE_SUA_API_KEY_AQUI")
+# ================== SEGURANÇA: OPENAI API KEY ==================
+# Recomendado: Configure 'api_key' em Settings > Secrets no Streamlit Cloud
+# O nome do secret deve ser: OPENAI_API_KEY
+try:
+    api_key = st.secrets["OPENAI_API_KEY"]
+except:
+    api_key = "COLOQUE_SUA_API_KEY_AQUI" # Fallback caso não use Secrets
 
-# ================== TÍTULO ==================
-st.markdown("## 🤖 ChatBot com IA")
+client = OpenAI(api_key=api_key)
+
+# ================== INTERFACE ==================
+st.markdown("## 🤖 <span style='color:#14c204'>ChatBot</span> com IA", unsafe_allow_html=True)
 st.markdown(
-    "<p style='text-align:center; color: #94a3b8;'>Converse com uma IA em tempo real</p>",
+    "<p style='color: #000000;'>Converse com uma IA em tempo real</p>",
     unsafe_allow_html=True
 )
 
 st.divider()
 
-# session state
-if "lista_mensagens" not in st.session_state:
-    st.session_state["lista_mensagens"] = []
+# Inicialização do Histórico
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-# historico de mensagens
-for mensagem in st.session_state["lista_mensagens"]:
-    role = mensagem["role"]
-    content = mensagem["content"]
-    st.chat_message(role).write(content)
+# Exibição do Histórico
+for message in st.session_state.messages:
+    with st.chat_message(message["role"]):
+        st.markdown(message["content"])
 
-# caixa de input
-mensagem_usuario = st.chat_input("Digite sua mensagem...")
+# Caixa de Entrada
+if prompt := st.chat_input("Digite sua mensagem..."):
+    # Adiciona mensagem do usuário
+    st.session_state.messages.append({"role": "user", "content": prompt})
+    with st.chat_message("user"):
+        st.markdown(prompt)
 
-if mensagem_usuario:
-    # mensagem do usuário
-    st.chat_message("user").write(mensagem_usuario)
-    mensagem = {"role": "user", "content": mensagem_usuario}
-    st.session_state["lista_mensagens"].append(mensagem)
-
-    # resposta da IA
-    resposta_modelo = modelo.chat.completions.create(
-        messages=st.session_state["lista_mensagens"],
-        model="gpt-4o"
-    )
-
-    resposta_ia = resposta_modelo.choices[0].message.content
-
-    # mensagem da IA
-    st.chat_message("assistant").write(resposta_ia)
-    mensagem_ia = {"role": "assistant", "content": resposta_ia}
-    st.session_state["lista_mensagens"].append(mensagem_ia)
+    # Resposta da IA
+    with st.chat_message("assistant"):
+        try:
+            response = client.chat.completions.create(
+                model="gpt-4o",
+                messages=[
+                    {"role": m["role"], "content": m["content"]}
+                    for m in st.session_state.messages
+                ]
+            )
+            full_response = response.choices[0].message.content
+            st.markdown(full_response)
+            st.session_state.messages.append({"role": "assistant", "content": full_response})
+        except Exception as e:
+            st.error(f"Erro na API: {e}")
