@@ -1,8 +1,3 @@
-Aqui está o código completo e corrigido. Removi a lógica de "OpenAI" que estava causando o erro e a substituí pela estrutura correta do SDK google-genai.
-
-Também ajustei o modelo para gemini-2.0-flash, que é a versão estável e recomendada no momento.
-
-Python
 import streamlit as st
 from google import genai
 
