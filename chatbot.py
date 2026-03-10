@@ -1,9 +1,9 @@
 import streamlit as st
-from openai import OpenAI
+from google import genai
 
 # ================== CONFIGURAÇÃO DA PÁGINA ==================
 st.set_page_config(
-    page_title="ChatBot com IA",
+    page_title="Fulltech ChatBot",
     page_icon="🤖",
     layout="centered"
 )
@@ -53,14 +53,14 @@ st.markdown(f"""
 # Recomendado: Configure 'api_key' em Settings > Secrets no Streamlit Cloud
 # O nome do secret deve ser: OPENAI_API_KEY
 try:
-    api_key = st.secrets["OPENAI_API_KEY"]
+    api_key = st.secrets["AIzaSyDX9MRX888fYTDYTY43KKJz24KSEJyAADo"]
 except:
-    api_key = "COLOQUE_SUA_API_KEY_AQUI" # Fallback caso não use Secrets
+    api_key = "AIzaSyDX9MRX888fYTDYTY43KKJz24KSEJyAADo" # Fallback caso não use Secrets
 
-client = OpenAI(api_key=api_key)
+client = genai.Client(api_key=api_key)
 
 # ================== INTERFACE ==================
-st.markdown("## 🤖 <span style='color:#14c204'>ChatBot</span> com IA", unsafe_allow_html=True)
+st.markdown("## 🤖 <span style='color:#14c204'>Fulltech</span> ChatBot", unsafe_allow_html=True)
 st.markdown(
     "<p style='color: #000000;'>Converse com uma IA em tempo real</p>",
     unsafe_allow_html=True
@@ -88,7 +88,7 @@ if prompt := st.chat_input("Digite sua mensagem..."):
     with st.chat_message("assistant"):
         try:
             response = client.chat.completions.create(
-                model="gpt-4o",
+                model="gemini-3-flash-preview",
                 messages=[
                     {"role": m["role"], "content": m["content"]}
                     for m in st.session_state.messages
