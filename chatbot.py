@@ -1,9 +1,3 @@
-Com certeza! Além de ajustar as cores para a paleta que você pediu (#f5f5f5, #000000 e #14c204), fiz uma melhoria crucial: removi a API Key exposta no código.
-
-Deixar a chave diretamente no script é um risco de segurança e pode fazer com que a OpenAI bloqueie sua conta. Agora o código busca a chave nos Secrets do Streamlit.
-
-O Código Atualizado (chatbot.py)
-Python
 import streamlit as st
 from openai import OpenAI
 
